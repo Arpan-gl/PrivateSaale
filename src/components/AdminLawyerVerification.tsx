@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import axios from '../axios';
+import { DemoService, adminLawyerApplications } from '../services/demoData';
 
 interface LawyerApplication {
   _id: string;
@@ -123,20 +124,15 @@ const AdminLawyerVerification = () => {
   
   const fetchApplications = async () => {
     try {
-      const params = new URLSearchParams({
-        page: pagination.currentPage.toString(),
-        limit: pagination.itemsPerPage.toString()
+      // Use demo data instead of API call
+      const data = await DemoService.getAdminLawyerApplications();
+      setApplications(data);
+      setPagination({
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: data.length,
+        itemsPerPage: data.length
       });
-      
-      if (filters.status && filters.status !== 'all') params.append('status', filters.status);
-      if (filters.practiceArea) params.append('practiceArea', filters.practiceArea);
-      if (filters.state) params.append('state', filters.state);
-      
-      const response = await axios.get(`/lawyer-applications/admin?${params}`);
-      if (response.data.success) {
-        setApplications(response.data.data);
-        setPagination(response.data.pagination);
-      }
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast({
@@ -158,30 +154,24 @@ const AdminLawyerVerification = () => {
     
     setReviewLoading(true);
     try {
-      const response = await axios.put(`/lawyer-applications/admin/${selectedApplication._id}/review`, {
-        action: reviewForm.action,
-        notes: reviewForm.notes,
-        verificationScore: reviewForm.verificationScore,
-        rejectionReason: reviewForm.rejectionReason
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      toast({
+        title: "Success",
+        description: `Application ${reviewForm.action}d successfully (Demo Mode)`,
+        variant: "default",
       });
-
-      if (response.data.success) {
-        toast({
-          title: "Success",
-          description: `Application ${reviewForm.action}d successfully`,
-          variant: "default",
-        });
-        
-        // Reset form and refresh
-        setReviewForm({
-          action: 'start_review',
-          notes: '',
-          verificationScore: 100,
-          rejectionReason: ''
-        });
-        setSelectedApplication(null);
-        fetchApplications();
-      }
+      
+      // Reset form and refresh
+      setReviewForm({
+        action: 'start_review',
+        notes: '',
+        verificationScore: 100,
+        rejectionReason: ''
+      });
+      setSelectedApplication(null);
+      fetchApplications();
     } catch (error: unknown) {
       console.error('Error reviewing application:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to review application';

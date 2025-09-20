@@ -12,17 +12,23 @@ import {
   FileText,
   TrendingUp,
   UserCheck,
-  UserX
+  UserX,
+  Award
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import axios from '../axios';
 import { Link } from 'react-router-dom';
+import { DemoService, adminDashboardStats, adminUsers, adminLawyerApplications } from '../services/demoData';
 
 interface DashboardStats {
   pendingApplications: number;
   totalUsers: number;
   totalLawyers: number;
   verifiedLawyers: number;
+  totalRevenue: number;
+  monthlyGrowth: number;
+  activeIssues: number;
+  resolvedIssues: number;
 }
 
 interface PendingApplication {
@@ -50,18 +56,14 @@ const AdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [statsResponse, pendingResponse] = await Promise.all([
-        axios.get('/admin/dashboard-stats'),
-        axios.get('/admin/pending-applications?limit=3')
+      // Use demo data instead of API calls
+      const [stats, applications] = await Promise.all([
+        DemoService.getAdminDashboardStats(),
+        DemoService.getAdminLawyerApplications()
       ]);
 
-      if (statsResponse.data.success) {
-        setStats(statsResponse.data.data);
-      }
-
-      if (pendingResponse.data.success) {
-        setPendingApplications(pendingResponse.data.data);
-      }
+      setStats(stats);
+      setPendingApplications(applications.slice(0, 3));
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast({
@@ -148,6 +150,65 @@ const AdminDashboard = () => {
             <div className="text-2xl font-bold">{stats?.pendingApplications || 0}</div>
             <p className="text-xs text-muted-foreground">
               Awaiting review
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Additional Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${stats?.totalRevenue?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className="text-green-600">+{stats?.monthlyGrowth || 0}%</span> this month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Issues</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.activeIssues || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Currently open
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Resolved Issues</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.resolvedIssues || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Successfully closed
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Verification Rate</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {stats?.totalLawyers && stats?.verifiedLawyers 
+                ? Math.round((stats.verifiedLawyers / stats.totalLawyers) * 100)
+                : 0}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Lawyers verified
             </p>
           </CardContent>
         </Card>

@@ -30,6 +30,24 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import axios from '../axios';
+import { DemoService, analyticsData } from '../services/demoData';
+import { 
+  LineChart, 
+  Line, 
+  AreaChart, 
+  Area, 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  Cell, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from 'recharts';
 
 interface AnalyticsData {
   userGrowth: Array<{ date: string; count: number; role: string }>;
@@ -67,10 +85,9 @@ const AdminAnalytics = () => {
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/admin/reports?type=analytics&dateRange=${dateRange}`);
-      if (response.data.success) {
-        setAnalyticsData(response.data.data);
-      }
+      // Use demo data instead of API call
+      const data = await DemoService.getAnalyticsData();
+      setAnalyticsData(data);
     } catch (error) {
       console.error('Error fetching analytics data:', error);
       toast({
@@ -85,10 +102,20 @@ const AdminAnalytics = () => {
 
   const generateReport = async () => {
     try {
-      const response = await axios.post('/admin/reports/generate', reportConfig, {
-        responseType: 'blob'
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Create demo report data
+      const reportData = `Analytics Report - ${new Date().toLocaleString()}\n\n` +
+        `Total Users: ${analyticsData?.systemUsage.find(u => u.metric === 'totalUsers')?.value || 0}\n` +
+        `Total Lawyers: ${analyticsData?.systemUsage.find(u => u.metric === 'totalLawyers')?.value || 0}\n` +
+        `Verified Lawyers: ${analyticsData?.systemUsage.find(u => u.metric === 'verifiedLawyers')?.value || 0}\n` +
+        `Active Issues: ${analyticsData?.systemUsage.find(u => u.metric === 'activeIssues')?.value || 0}\n` +
+        `Total Revenue: $${analyticsData?.systemUsage.find(u => u.metric === 'totalRevenue')?.value?.toLocaleString() || 0}\n\n` +
+        `This is a demo report generated in demo mode.`;
+      
+      const blob = new Blob([reportData], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `report-${reportConfig.type}-${new Date().toISOString().split('T')[0]}.${reportConfig.format}`);
@@ -97,7 +124,7 @@ const AdminAnalytics = () => {
       link.remove();
       toast({
         title: "Success",
-        description: "Report generated successfully",
+        description: "Report generated successfully (Demo Mode)",
       });
     } catch (error) {
       console.error('Error generating report:', error);
@@ -169,7 +196,6 @@ const AdminAnalytics = () => {
       {/* Quick Stats */}
       {analyticsData && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Example card - Total Users */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -186,7 +212,57 @@ const AdminAnalytics = () => {
               </p>
             </CardContent>
           </Card>
-          {/* Add other stat cards here... */}
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Lawyers</CardTitle>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {analyticsData.systemUsage.find(u => u.metric === 'totalLawyers')?.value || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                <span className="text-green-600">
+                  +{analyticsData.systemUsage.find(u => u.metric === 'totalLawyers')?.change || 0}%
+                </span> from last period
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Issues</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {analyticsData.systemUsage.find(u => u.metric === 'activeIssues')?.value || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                <span className="text-green-600">
+                  +{analyticsData.systemUsage.find(u => u.metric === 'activeIssues')?.change || 0}%
+                </span> from last period
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                ${analyticsData.systemUsage.find(u => u.metric === 'totalRevenue')?.value?.toLocaleString() || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                <span className="text-green-600">
+                  +{analyticsData.systemUsage.find(u => u.metric === 'totalRevenue')?.change || 0}%
+                </span> from last period
+              </p>
+            </CardContent>
+          </Card>
         </div>
       )}
 
@@ -199,6 +275,81 @@ const AdminAnalytics = () => {
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* User Growth Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle>User Growth Over Time</CardTitle>
+                <CardDescription>Monthly user and lawyer registrations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={analyticsData?.userGrowth.filter(item => item.role === 'user')}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="count" stroke="#8884d8" strokeWidth={2} name="Users" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Revenue Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue & User Growth</CardTitle>
+                <CardDescription>Monthly revenue vs user count</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={analyticsData?.revenueData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis yAxisId="left" />
+                      <YAxis yAxisId="right" orientation="right" />
+                      <Tooltip />
+                      <Legend />
+                      <Area yAxisId="left" type="monotone" dataKey="revenue" stackId="1" stroke="#8884d8" fill="#8884d8" name="Revenue ($)" />
+                      <Area yAxisId="right" type="monotone" dataKey="users" stackId="2" stroke="#82ca9d" fill="#82ca9d" name="Users" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Legal Issues by Category */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Legal Issues by Category</CardTitle>
+              <CardDescription>Distribution of legal issues and average budgets</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analyticsData?.legalIssues}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="category" angle={-45} textAnchor="end" height={100} />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
+                    <Tooltip />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="count" fill="#8884d8" name="Issue Count" />
+                    <Bar yAxisId="right" dataKey="avgBudget" fill="#82ca9d" name="Avg Budget ($)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Users Tab */}
         <TabsContent value="users" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -206,26 +357,151 @@ const AdminAnalytics = () => {
             <Card>
               <CardHeader>
                 <CardTitle>User Demographics</CardTitle>
+                <CardDescription>Distribution of user types</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64 flex items-center justify-center bg-muted rounded-lg">
-                  <PieChart className="h-12 w-12 text-muted-foreground" />
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Regular Users', value: analyticsData?.systemUsage.find(u => u.metric === 'totalUsers')?.value || 0, fill: '#8884d8' },
+                          { name: 'Lawyers', value: analyticsData?.systemUsage.find(u => u.metric === 'totalLawyers')?.value || 0, fill: '#82ca9d' },
+                          { name: 'Verified Lawyers', value: analyticsData?.systemUsage.find(u => u.metric === 'verifiedLawyers')?.value || 0, fill: '#ffc658' }
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {[
+                          { name: 'Regular Users', value: analyticsData?.systemUsage.find(u => u.metric === 'totalUsers')?.value || 0, fill: '#8884d8' },
+                          { name: 'Lawyers', value: analyticsData?.systemUsage.find(u => u.metric === 'totalLawyers')?.value || 0, fill: '#82ca9d' },
+                          { name: 'Verified Lawyers', value: analyticsData?.systemUsage.find(u => u.metric === 'verifiedLawyers')?.value || 0, fill: '#ffc658' }
+                        ].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
 
-            {/* FIXED User Engagement */}
+            {/* User Engagement */}
             <Card>
               <CardHeader>
                 <CardTitle>User Engagement</CardTitle>
+                <CardDescription>User and lawyer growth over time</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64 flex items-center justify-center bg-muted rounded-lg">
-                  <LineChart className="h-12 w-12 text-muted-foreground" />
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={analyticsData?.userGrowth}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="count" stroke="#8884d8" strokeWidth={2} name="Users" />
+                      <Line type="monotone" dataKey="count" stroke="#82ca9d" strokeWidth={2} name="Lawyers" />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Lawyers Tab */}
+        <TabsContent value="lawyers" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Lawyer Applications Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Lawyer Applications Status</CardTitle>
+                <CardDescription>Current status of lawyer applications</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={analyticsData?.lawyerApplications}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ status, percent }) => `${status} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="count"
+                      >
+                        {analyticsData?.lawyerApplications.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={['#8884d8', '#82ca9d', '#ffc658', '#ff7300'][index % 4]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Top Performing Lawyers */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Performing Lawyers</CardTitle>
+                <CardDescription>Revenue and case count by lawyer</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={analyticsData?.topLawyers}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="username" />
+                      <YAxis yAxisId="left" />
+                      <YAxis yAxisId="right" orientation="right" />
+                      <Tooltip />
+                      <Legend />
+                      <Bar yAxisId="left" dataKey="cases" fill="#8884d8" name="Cases" />
+                      <Bar yAxisId="right" dataKey="revenue" fill="#82ca9d" name="Revenue ($)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Reports Tab */}
+        <TabsContent value="reports" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>Latest system activities and events</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {analyticsData?.recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
+                    <div className="flex-shrink-0 mt-1">
+                      {getImpactIcon(activity.impact)}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{activity.description}</p>
+                      <p className={`text-sm ${getImpactColor(activity.impact)}`}>
+                        {new Date(activity.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

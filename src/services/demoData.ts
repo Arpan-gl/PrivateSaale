@@ -303,9 +303,9 @@ export const demoIssues: DemoIssue[] = [
     urgency: 'high',
     status: 'in_progress',
     author: {
-      _id: demoUser._id,
-      username: demoUser.name,
-      email: demoUser.email
+      _id: 'anonymous',
+      username: 'Anonymous',
+      email: 'anonymous@example.com'
     },
     budget: {
       min: 3000,
@@ -372,9 +372,9 @@ export const demoIssues: DemoIssue[] = [
     urgency: 'high',
     status: 'open',
     author: {
-      _id: demoUser._id,
-      username: demoUser.name,
-      email: demoUser.email
+      _id: 'anonymous',
+      username: 'Anonymous',
+      email: 'anonymous@example.com'
     },
     budget: {
       min: 2000,
@@ -492,6 +492,415 @@ export const demoSchemes: DemoScheme[] = [
   }
 ];
 
+// Admin demo data
+export interface AdminDashboardStats {
+  totalUsers: number;
+  totalLawyers: number;
+  verifiedLawyers: number;
+  pendingApplications: number;
+  totalRevenue: number;
+  monthlyGrowth: number;
+  activeIssues: number;
+  resolvedIssues: number;
+}
+
+export interface AdminUser {
+  _id: string;
+  username: string;
+  email: string;
+  role: 'user' | 'lawyer' | 'admin';
+  createdAt: string;
+  lastLogin?: string;
+  isActive: boolean;
+  lawyerProfile?: {
+    isVerified: boolean;
+    verificationStatus: 'pending' | 'approved' | 'rejected';
+    applicationDate?: string;
+    verificationDate?: string;
+    barNumber?: string;
+    practiceAreas?: string[];
+    yearsOfExperience?: number;
+    lawSchool?: string;
+  };
+}
+
+export interface AdminLawyerApplication {
+  _id: string;
+  applicant: {
+    _id: string;
+    username: string;
+    email: string;
+  };
+  status: 'pending' | 'under_review' | 'approved' | 'rejected';
+  applicationDate: string;
+  reviewDate?: string;
+  reviewedBy?: string;
+  barNumber: string;
+  barAssociation: string;
+  practiceAreas: string[];
+  yearsOfExperience: number;
+  lawSchool: string;
+  graduationYear: number;
+  phone: string;
+  officeAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  website: string;
+  specializations: string[];
+  languages: string[];
+  bio: string;
+  achievements: string[];
+  references: Array<{
+    name: string;
+    title: string;
+    organization: string;
+    email: string;
+    phone: string;
+    relationship: string;
+  }>;
+  adminNotes?: string;
+  rejectionReason?: string;
+  verificationScore?: number;
+  history: Array<{
+    action: string;
+    date: string;
+    admin?: string;
+    notes?: string;
+  }>;
+}
+
+export interface AnalyticsData {
+  userGrowth: Array<{ date: string; count: number; role: string }>;
+  lawyerApplications: Array<{ status: string; count: number }>;
+  legalIssues: Array<{ category: string; count: number; avgBudget: number }>;
+  systemUsage: Array<{ metric: string; value: number; change: number }>;
+  topLawyers: Array<{ username: string; rating: number; cases: number; revenue: number }>;
+  recentActivity: Array<{ type: string; description: string; timestamp: string; impact: 'positive' | 'negative' | 'neutral' }>;
+  revenueData: Array<{ month: string; revenue: number; users: number }>;
+  issueTrends: Array<{ category: string; count: number; trend: number }>;
+}
+
+// Demo admin data
+export const adminDashboardStats: AdminDashboardStats = {
+  totalUsers: 1247,
+  totalLawyers: 89,
+  verifiedLawyers: 3,
+  pendingApplications: 12,
+  totalRevenue: 45680,
+  monthlyGrowth: 15.2,
+  activeIssues: 156,
+  resolvedIssues: 423
+};
+
+export const adminUsers: AdminUser[] = [
+  {
+    _id: 'user-1',
+    username: 'john_doe',
+    email: 'john.doe@example.com',
+    role: 'user',
+    createdAt: '2024-01-15T10:30:00Z',
+    lastLogin: '2024-12-20T14:22:00Z',
+    isActive: true
+  },
+  {
+    _id: 'user-2',
+    username: 'sarah_wilson',
+    email: 'sarah.wilson@example.com',
+    role: 'user',
+    createdAt: '2024-02-20T09:15:00Z',
+    lastLogin: '2024-12-19T16:45:00Z',
+    isActive: true
+  },
+  {
+    _id: 'lawyer-1',
+    username: 'sarah_johnson',
+    email: 'sarah.johnson@lawfirm.com',
+    role: 'lawyer',
+    createdAt: '2024-01-10T08:00:00Z',
+    lastLogin: '2024-12-20T11:30:00Z',
+    isActive: true,
+    lawyerProfile: {
+      isVerified: true,
+      verificationStatus: 'approved',
+      applicationDate: '2024-01-10T08:00:00Z',
+      verificationDate: '2024-01-15T14:30:00Z',
+      barNumber: 'NY123456',
+      practiceAreas: ['Corporate Law', 'Contract Law', 'M&A'],
+      yearsOfExperience: 12,
+      lawSchool: 'Harvard Law School'
+    }
+  },
+  {
+    _id: 'lawyer-2',
+    username: 'michael_chen',
+    email: 'michael.chen@legal.com',
+    role: 'lawyer',
+    createdAt: '2024-01-12T10:20:00Z',
+    lastLogin: '2024-12-20T09:15:00Z',
+    isActive: true,
+    lawyerProfile: {
+      isVerified: true,
+      verificationStatus: 'approved',
+      applicationDate: '2024-01-12T10:20:00Z',
+      verificationDate: '2024-01-18T16:45:00Z',
+      barNumber: 'CA789012',
+      practiceAreas: ['Intellectual Property', 'Technology Law', 'Startups'],
+      yearsOfExperience: 8,
+      lawSchool: 'Stanford Law School'
+    }
+  },
+  {
+    _id: 'lawyer-3',
+    username: 'emily_rodriguez',
+    email: 'emily.rodriguez@lawgroup.com',
+    role: 'lawyer',
+    createdAt: '2024-01-14T11:45:00Z',
+    lastLogin: '2024-12-19T13:20:00Z',
+    isActive: true,
+    lawyerProfile: {
+      isVerified: true,
+      verificationStatus: 'approved',
+      applicationDate: '2024-01-14T11:45:00Z',
+      verificationDate: '2024-01-20T10:15:00Z',
+      barNumber: 'IL345678',
+      practiceAreas: ['Employment Law', 'Labor Relations', 'HR Compliance'],
+      yearsOfExperience: 10,
+      lawSchool: 'Northwestern Law School'
+    }
+  },
+  {
+    _id: 'lawyer-4',
+    username: 'david_kim',
+    email: 'david.kim@law.com',
+    role: 'lawyer',
+    createdAt: '2024-02-01T14:30:00Z',
+    lastLogin: '2024-12-18T15:10:00Z',
+    isActive: true,
+    lawyerProfile: {
+      isVerified: false,
+      verificationStatus: 'pending',
+      applicationDate: '2024-02-01T14:30:00Z',
+      barNumber: 'TX901234',
+      practiceAreas: ['Criminal Law', 'DUI Defense'],
+      yearsOfExperience: 6,
+      lawSchool: 'University of Texas Law School'
+    }
+  },
+  {
+    _id: 'lawyer-5',
+    username: 'lisa_patel',
+    email: 'lisa.patel@legal.com',
+    role: 'lawyer',
+    createdAt: '2024-02-05T09:20:00Z',
+    lastLogin: '2024-12-17T12:45:00Z',
+    isActive: true,
+    lawyerProfile: {
+      isVerified: false,
+      verificationStatus: 'pending',
+      applicationDate: '2024-02-05T09:20:00Z',
+      barNumber: 'FL567890',
+      practiceAreas: ['Family Law', 'Divorce', 'Child Custody'],
+      yearsOfExperience: 7,
+      lawSchool: 'University of Miami Law School'
+    }
+  },
+  {
+    _id: 'admin-1',
+    username: 'admin_user',
+    email: 'admin@privatesaale.com',
+    role: 'admin',
+    createdAt: '2024-01-01T00:00:00Z',
+    lastLogin: '2024-12-20T16:30:00Z',
+    isActive: true
+  }
+];
+
+export const adminLawyerApplications: AdminLawyerApplication[] = [
+  {
+    _id: 'app-1',
+    applicant: {
+      _id: 'lawyer-4',
+      username: 'david_kim',
+      email: 'david.kim@law.com'
+    },
+    status: 'pending',
+    applicationDate: '2024-02-01T14:30:00Z',
+    barNumber: 'TX901234',
+    barAssociation: 'State Bar of Texas',
+    practiceAreas: ['Criminal Law', 'DUI Defense', 'Traffic Violations'],
+    yearsOfExperience: 6,
+    lawSchool: 'University of Texas Law School',
+    graduationYear: 2018,
+    phone: '+1-512-555-0123',
+    officeAddress: {
+      street: '123 Main St',
+      city: 'Austin',
+      state: 'TX',
+      zipCode: '78701',
+      country: 'USA'
+    },
+    website: 'https://davidkimlaw.com',
+    specializations: ['DUI Defense', 'Criminal Defense', 'Traffic Law'],
+    languages: ['English', 'Korean'],
+    bio: 'Experienced criminal defense attorney specializing in DUI cases and traffic violations. Committed to protecting clients\' rights and achieving the best possible outcomes.',
+    achievements: ['Board Certified in Criminal Law', 'Top 100 Criminal Defense Attorneys 2023'],
+    references: [
+      {
+        name: 'Robert Johnson',
+        title: 'Senior Partner',
+        organization: 'Johnson & Associates',
+        email: 'r.johnson@jlaw.com',
+        phone: '+1-512-555-0456',
+        relationship: 'Former colleague'
+      }
+    ],
+    history: [
+      {
+        action: 'Application submitted',
+        date: '2024-02-01T14:30:00Z',
+        notes: 'Initial application received'
+      }
+    ]
+  },
+  {
+    _id: 'app-2',
+    applicant: {
+      _id: 'lawyer-5',
+      username: 'lisa_patel',
+      email: 'lisa.patel@legal.com'
+    },
+    status: 'pending',
+    applicationDate: '2024-02-05T09:20:00Z',
+    barNumber: 'FL567890',
+    barAssociation: 'Florida Bar',
+    practiceAreas: ['Family Law', 'Divorce', 'Child Custody', 'Adoption'],
+    yearsOfExperience: 7,
+    lawSchool: 'University of Miami Law School',
+    graduationYear: 2017,
+    phone: '+1-305-555-0789',
+    officeAddress: {
+      street: '456 Ocean Drive',
+      city: 'Miami',
+      state: 'FL',
+      zipCode: '33101',
+      country: 'USA'
+    },
+    website: 'https://lisapatellaw.com',
+    specializations: ['Family Law', 'Divorce Mediation', 'Child Custody'],
+    languages: ['English', 'Spanish', 'Hindi'],
+    bio: 'Compassionate family law attorney with extensive experience in divorce, child custody, and adoption cases. Focused on helping families navigate difficult times.',
+    achievements: ['Family Law Specialist Certification', 'Pro Bono Service Award 2022'],
+    references: [
+      {
+        name: 'Maria Gonzalez',
+        title: 'Managing Partner',
+        organization: 'Gonzalez Family Law',
+        email: 'm.gonzalez@gflaw.com',
+        phone: '+1-305-555-0321',
+        relationship: 'Former supervisor'
+      }
+    ],
+    history: [
+      {
+        action: 'Application submitted',
+        date: '2024-02-05T09:20:00Z',
+        notes: 'Initial application received'
+      }
+    ]
+  }
+];
+
+export const analyticsData: AnalyticsData = {
+  userGrowth: [
+    { date: '2024-01', count: 150, role: 'user' },
+    { date: '2024-02', count: 280, role: 'user' },
+    { date: '2024-03', count: 420, role: 'user' },
+    { date: '2024-04', count: 580, role: 'user' },
+    { date: '2024-05', count: 720, role: 'user' },
+    { date: '2024-06', count: 890, role: 'user' },
+    { date: '2024-07', count: 1050, role: 'user' },
+    { date: '2024-08', count: 1180, role: 'user' },
+    { date: '2024-09', count: 1320, role: 'user' },
+    { date: '2024-10', count: 1450, role: 'user' },
+    { date: '2024-11', count: 1580, role: 'user' },
+    { date: '2024-12', count: 1247, role: 'user' },
+    { date: '2024-01', count: 5, role: 'lawyer' },
+    { date: '2024-02', count: 12, role: 'lawyer' },
+    { date: '2024-03', count: 18, role: 'lawyer' },
+    { date: '2024-04', count: 25, role: 'lawyer' },
+    { date: '2024-05', count: 32, role: 'lawyer' },
+    { date: '2024-06', count: 41, role: 'lawyer' },
+    { date: '2024-07', count: 48, role: 'lawyer' },
+    { date: '2024-08', count: 56, role: 'lawyer' },
+    { date: '2024-09', count: 63, role: 'lawyer' },
+    { date: '2024-10', count: 71, role: 'lawyer' },
+    { date: '2024-11', count: 78, role: 'lawyer' },
+    { date: '2024-12', count: 89, role: 'lawyer' }
+  ],
+  lawyerApplications: [
+    { status: 'pending', count: 12 },
+    { status: 'under_review', count: 3 },
+    { status: 'approved', count: 3 },
+    { status: 'rejected', count: 2 }
+  ],
+  legalIssues: [
+    { category: 'Employment Law', count: 45, avgBudget: 3500 },
+    { category: 'Family Law', count: 38, avgBudget: 8500 },
+    { category: 'Criminal Law', count: 32, avgBudget: 12000 },
+    { category: 'Property Law', count: 28, avgBudget: 4200 },
+    { category: 'Corporate Law', count: 25, avgBudget: 15000 },
+    { category: 'Intellectual Property', count: 18, avgBudget: 9500 },
+    { category: 'Civil Law', count: 15, avgBudget: 2800 }
+  ],
+  systemUsage: [
+    { metric: 'totalUsers', value: 1247, change: 15.2 },
+    { metric: 'totalLawyers', value: 89, change: 8.5 },
+    { metric: 'verifiedLawyers', value: 3, change: 0 },
+    { metric: 'activeIssues', value: 156, change: 22.3 },
+    { metric: 'resolvedIssues', value: 423, change: 18.7 },
+    { metric: 'totalRevenue', value: 45680, change: 25.1 }
+  ],
+  topLawyers: [
+    { username: 'sarah_johnson', rating: 4.8, cases: 45, revenue: 12500 },
+    { username: 'michael_chen', rating: 4.6, cases: 38, revenue: 9800 },
+    { username: 'emily_rodriguez', rating: 4.7, cases: 42, revenue: 11200 }
+  ],
+  recentActivity: [
+    { type: 'user_registration', description: 'New user registered: john_doe', timestamp: '2024-12-20T14:22:00Z', impact: 'positive' },
+    { type: 'lawyer_application', description: 'New lawyer application: david_kim', timestamp: '2024-12-20T10:15:00Z', impact: 'neutral' },
+    { type: 'issue_resolved', description: 'Issue resolved: Employment Contract Dispute', timestamp: '2024-12-19T16:30:00Z', impact: 'positive' },
+    { type: 'payment_received', description: 'Payment received: $2,500', timestamp: '2024-12-19T14:45:00Z', impact: 'positive' },
+    { type: 'system_alert', description: 'High server load detected', timestamp: '2024-12-19T11:20:00Z', impact: 'negative' }
+  ],
+  revenueData: [
+    { month: 'Jan', revenue: 3200, users: 150 },
+    { month: 'Feb', revenue: 4800, users: 280 },
+    { month: 'Mar', revenue: 6200, users: 420 },
+    { month: 'Apr', revenue: 7800, users: 580 },
+    { month: 'May', revenue: 9200, users: 720 },
+    { month: 'Jun', revenue: 11200, users: 890 },
+    { month: 'Jul', revenue: 13800, users: 1050 },
+    { month: 'Aug', revenue: 15200, users: 1180 },
+    { month: 'Sep', revenue: 16800, users: 1320 },
+    { month: 'Oct', revenue: 18400, users: 1450 },
+    { month: 'Nov', revenue: 20100, users: 1580 },
+    { month: 'Dec', revenue: 22800, users: 1247 }
+  ],
+  issueTrends: [
+    { category: 'Employment Law', count: 45, trend: 12.5 },
+    { category: 'Family Law', count: 38, trend: 8.3 },
+    { category: 'Criminal Law', count: 32, trend: 15.2 },
+    { category: 'Property Law', count: 28, trend: 5.7 },
+    { category: 'Corporate Law', count: 25, trend: 22.1 },
+    { category: 'Intellectual Property', count: 18, trend: 18.9 },
+    { category: 'Civil Law', count: 15, trend: 3.2 }
+  ]
+};
+
 // Demo service functions
 export class DemoService {
   static async simulateDelay(ms: number = 1000): Promise<void> {
@@ -550,8 +959,9 @@ export class DemoService {
     const queryLower = query.toLowerCase();
     const recommendations = [];
     
-    // Enhanced recommendation logic
-    for (const lawyer of demoLawyers) {
+    // Enhanced recommendation logic with fixed match percentages
+    for (let i = 0; i < demoLawyers.length; i++) {
+      const lawyer = demoLawyers[i];
       let score = 0;
       let matchedExpertise = [];
       
@@ -579,13 +989,25 @@ export class DemoService {
         }
       }
       
-      if (score > 0) {
+      // Fixed match percentages: First lawyer gets 40%, second gets 10%, third gets 30%
+      let finalScore;
+      if (i === 0) {
+        finalScore = 0.4; // 40% match
+      } else if (i === 1) {
+        finalScore = 0.1; // 10% match
+      } else if (i === 2) {
+        finalScore = 0.3; // 30% match
+      } else {
+        finalScore = Math.min(score / 5, 1); // Normalize score to 0-1 for others
+      }
+      
+      if (score > 0 || i < 3) { // Always include first 3 lawyers for demo
         recommendations.push({
           ...lawyer,
-          score: Math.min(score / 5, 1), // Normalize score to 0-1
-          matchedExpertise,
+          score: finalScore,
+          matchedExpertise: matchedExpertise.length > 0 ? matchedExpertise : lawyer.expertise.slice(0, 2),
           details: {
-            expertise: matchedExpertise.join(', '),
+            expertise: matchedExpertise.length > 0 ? matchedExpertise.join(', ') : lawyer.expertise.slice(0, 2).join(', '),
             experience: `${lawyer.experience_years} years`,
             location: lawyer.location
           }
@@ -716,5 +1138,26 @@ export class DemoService {
     }
     
     return response;
+  }
+
+  // Admin service methods
+  static async getAdminDashboardStats(): Promise<AdminDashboardStats> {
+    await this.simulateDelay(800);
+    return adminDashboardStats;
+  }
+
+  static async getAdminUsers(): Promise<AdminUser[]> {
+    await this.simulateDelay(600);
+    return adminUsers;
+  }
+
+  static async getAdminLawyerApplications(): Promise<AdminLawyerApplication[]> {
+    await this.simulateDelay(700);
+    return adminLawyerApplications;
+  }
+
+  static async getAnalyticsData(): Promise<AnalyticsData> {
+    await this.simulateDelay(1000);
+    return analyticsData;
   }
 }
