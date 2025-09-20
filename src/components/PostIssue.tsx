@@ -82,7 +82,11 @@ const PostIssue: React.FC<PostIssueProps> = ({ onIssuePosted }) => {
         // Use demo service
         const issueData = {
           ...formData,
-          author: {
+          author: formData.isAnonymous ? {
+            _id: 'anonymous',
+            username: 'Anonymous',
+            email: 'anonymous@example.com'
+          } : {
             _id: demoUser._id,
             username: demoUser.name,
             email: demoUser.email

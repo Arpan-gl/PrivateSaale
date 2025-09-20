@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import axios from '../axios';
+import { DemoService, adminUsers } from '../services/demoData';
 
 interface User {
   _id: string;
@@ -113,21 +114,15 @@ const AdminUserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({
-        page: pagination.currentPage.toString(),
-        limit: pagination.itemsPerPage.toString()
+      // Use demo data instead of API call
+      const data = await DemoService.getAdminUsers();
+      setUsers(data);
+      setPagination({
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: data.length,
+        itemsPerPage: data.length
       });
-      
-      if (filters.role) params.append('role', filters.role);
-      if (filters.status) params.append('status', filters.status);
-      if (filters.search) params.append('search', filters.search);
-      if (filters.verificationStatus) params.append('verificationStatus', filters.verificationStatus);
-
-      const response = await axios.get(`/admin/users?${params}`);
-      if (response.data.success) {
-        setUsers(response.data.data);
-        setPagination(response.data.pagination);
-      }
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -142,10 +137,28 @@ const AdminUserManagement = () => {
 
   const fetchUserActivity = async (userId: string) => {
     try {
-      const response = await axios.get(`/admin/users/${userId}/activity`);
-      if (response.data.success) {
-        setUserActivity(response.data.data);
-      }
+      // Demo user activity data
+      const demoActivity = [
+        {
+          type: 'login',
+          date: new Date().toISOString(),
+          description: 'User logged in successfully',
+          details: { ip: '192.168.1.1', browser: 'Chrome' }
+        },
+        {
+          type: 'profile_update',
+          date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          description: 'Profile information updated',
+          details: { fields: ['email', 'phone'] }
+        },
+        {
+          type: 'issue_created',
+          date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+          description: 'Created new legal issue',
+          details: { issueId: 'issue-123', category: 'Employment Law' }
+        }
+      ];
+      setUserActivity(demoActivity);
     } catch (error) {
       console.error('Error fetching user activity:', error);
       toast({
@@ -158,45 +171,39 @@ const AdminUserManagement = () => {
 
   const handleUserAction = async (action: string, userId?: string) => {
     try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       if (action === 'create') {
-        const response = await axios.post('/admin/users', userModal.formData);
-        if (response.data.success) {
-          toast({
-            title: "Success",
-            description: "User created successfully",
-            variant: "default",
-          });
-          setShowUserModal(false);
-          fetchUsers();
-        }
+        toast({
+          title: "Success",
+          description: "User created successfully (Demo Mode)",
+          variant: "default",
+        });
+        setShowUserModal(false);
+        fetchUsers();
       } else if (action === 'update' && userId) {
-        const response = await axios.put(`/admin/users/${userId}`, userModal.formData);
-        if (response.data.success) {
-          toast({
-            title: "Success",
-            description: "User updated successfully",
-            variant: "default",
-          });
-          setShowUserModal(false);
-          fetchUsers();
-        }
+        toast({
+          title: "Success",
+          description: "User updated successfully (Demo Mode)",
+          variant: "default",
+        });
+        setShowUserModal(false);
+        fetchUsers();
       } else if (action === 'delete' && userId) {
-        const response = await axios.delete(`/admin/users/${userId}`);
-        if (response.data.success) {
-          toast({
-            title: "Success",
-            description: "User deleted successfully",
-            variant: "default",
-          });
-          setShowDeleteModal(false);
-          fetchUsers();
-        }
+        toast({
+          title: "Success",
+          description: "User deleted successfully (Demo Mode)",
+          variant: "default",
+        });
+        setShowDeleteModal(false);
+        fetchUsers();
       }
     } catch (error: any) {
       console.error('Error performing user action:', error);
       toast({
         title: "Error",
-        description: error?.response?.data?.message || "Failed to perform action",
+        description: "Failed to perform action",
         variant: "destructive",
       });
     }
@@ -204,25 +211,20 @@ const AdminUserManagement = () => {
 
   const handleBulkAction = async (action: string, userIds: string[]) => {
     try {
-      const response = await axios.post('/admin/users/bulk-action', {
-        action,
-        userIds,
-        data: action === 'change-role' ? { role: filters.role } : {}
-      });
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (response.data.success) {
-        toast({
-          title: "Success",
-          description: response.data.message,
-          variant: "default",
-        });
-        fetchUsers();
-      }
+      toast({
+        title: "Success",
+        description: `Bulk action "${action}" completed successfully (Demo Mode)`,
+        variant: "default",
+      });
+      fetchUsers();
     } catch (error: any) {
       console.error('Error performing bulk action:', error);
       toast({
         title: "Error",
-        description: error?.response?.data?.message || "Failed to perform bulk action",
+        description: "Failed to perform bulk action",
         variant: "destructive",
       });
     }
@@ -302,11 +304,17 @@ const AdminUserManagement = () => {
 
   const exportUsers = async () => {
     try {
-      const response = await axios.get('/admin/export/users', {
-        responseType: 'blob'
-      });
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Create demo CSV data
+      const csvData = "Username,Email,Role,Status,Created At\n" +
+        users.map(user => 
+          `${user.username},${user.email},${user.role},${user.isActive ? 'Active' : 'Inactive'},${new Date(user.createdAt).toLocaleDateString()}`
+        ).join('\n');
+      
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'users.csv');
@@ -316,7 +324,7 @@ const AdminUserManagement = () => {
       
       toast({
         title: "Success",
-        description: "Users exported successfully",
+        description: "Users exported successfully (Demo Mode)",
         variant: "default",
       });
     } catch (error) {
