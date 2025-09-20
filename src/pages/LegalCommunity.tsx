@@ -1,0 +1,499 @@
+import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  MessageSquare, 
+  FileText, 
+  Users, 
+  Briefcase,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  XCircle,
+  Star
+} from 'lucide-react';
+import PostIssue from '@/components/PostIssue';
+import LegalIssues from '@/components/LegalIssues';
+import LawyerResponse from '@/components/LawyerResponse';
+import HireLawyer from '@/components/HireLawyer';
+import LawyerApplicationStatus from '@/components/LawyerApplicationStatus';
+import { useToast } from '@/components/ui/use-toast';
+import axios from '../axios';
+import Header from '@/components/Header';
+import { DemoService, demoUser, DemoIssue, DemoLawyer } from '@/services/demoData';
+
+interface User {
+  _id: string;
+  username: string;
+  email: string;
+  role: 'user' | 'lawyer' | 'admin';
+  lawyerProfile?: {
+    isVerified: boolean;
+    verificationStatus: 'pending' | 'approved' | 'rejected';
+    applicationDate?: string;
+  };
+}
+
+const LegalCommunity = () => {
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('browse');
+  const [selectedIssue, setSelectedIssue] = useState<any>(null);
+  const [selectedResponse, setSelectedResponse] = useState<any>(null);
+  const [showPostIssue, setShowPostIssue] = useState(false);
+  const [issues, setIssues] = useState<any[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [recs, setRecs] = useState<any[] | null>(null);
+  const [recsLoading, setRecsLoading] = useState(false);
+  const [storyDraft, setStoryDraft] = useState('');
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      // Use demo user data
+      setUser(demoUser);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePostIssue = () => {
+    setShowPostIssue(true);
+    setActiveTab('post');
+  };
+
+  const handleIssuePosted = () => {
+    setShowPostIssue(false);
+    setActiveTab('browse');
+    setIssues([]); // Clear issues to trigger refresh in LegalIssues
+  };
+
+  const handleViewIssue = (issue: any) => {
+    setSelectedIssue(issue);
+    setActiveTab('respond');
+  };
+
+  const handleResponseSelected = (response: any) => {
+    setSelectedResponse(response);
+    setActiveTab('hire');
+  };
+
+  const fetchRecommendations = async () => {
+    try {
+      setRecsLoading(true);
+      setRecs(null);
+      
+      const query = storyDraft || selectedIssue?.description || '';
+      if (!query.trim()) {
+        setRecs([]);
+        return;
+      }
+      
+      // Use enhanced demo service for lawyer recommendations
+      const recommendations = await DemoService.getLawyerRecommendations(query);
+      setRecs(recommendations);
+    } catch (e) {
+      console.error('Error fetching recommendations:', e);
+      setRecs([]);
+    } finally {
+      setRecsLoading(false);
+    }
+  };
+
+  const getLawyerStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Clock className="h-4 w-4 text-yellow-500" />;
+      case 'approved':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'rejected':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const getLawyerStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'approved':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'rejected':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If user is a lawyer but not verified, show application status
+  if (user?.role === 'lawyer' && !user.lawyerProfile?.isVerified) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-center mb-4">Legal Community</h1>
+          <p className="text-center text-muted-foreground">
+            Complete your verification to start helping clients
+          </p>
+        </div>
+        
+        <div className="max-w-2xl mx-auto">
+          <Card className="border-orange-200 bg-orange-50/50">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                <Clock className="h-8 w-8 text-orange-600" />
+              </div>
+              <CardTitle className="text-orange-800">Verification Pending</CardTitle>
+              <CardDescription className="text-orange-700">
+                Your lawyer application is currently under review by our admin team.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-center gap-2">
+                  <Badge className={getLawyerStatusColor(user.lawyerProfile?.verificationStatus || 'pending')}>
+                    {getLawyerStatusIcon(user.lawyerProfile?.verificationStatus || 'pending')}
+                    {user.lawyerProfile?.verificationStatus?.toUpperCase() || 'PENDING'}
+                  </Badge>
+                </div>
+                {user.lawyerProfile?.applicationDate && (
+                  <p className="text-sm text-orange-600">
+                    Applied on: {new Date(user.lawyerProfile.applicationDate).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+              
+              <div className="text-sm text-orange-700 bg-orange-100 p-4 rounded-lg">
+                <p className="font-medium mb-2">What happens next?</p>
+                <ul className="text-left space-y-1">
+                  <li>• Our admin team will review your application</li>
+                  <li>• We'll verify your credentials and documents</li>
+                  <li>• You'll receive an email notification once verified</li>
+                  <li>• After verification, you can start helping clients</li>
+                </ul>
+              </div>
+              
+              <p className="text-xs text-orange-600">
+                This process typically takes 2-3 business days. Thank you for your patience!
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-center mb-4">Legal Community</h1>
+          <p className="text-center text-muted-foreground">
+            Connect with legal professionals and get answers to your legal questions
+          </p>
+          
+          {/* User Role Badge */}
+          <div className="flex justify-center mt-4">
+            <Badge variant="outline" className="flex items-center gap-2">
+              {user?.role === 'lawyer' ? (
+                <>
+                  <Briefcase className="h-4 w-4" />
+                  Verified Lawyer
+                </>
+              ) : (
+                <>
+                  <Users className="h-4 w-4" />
+                  Legal Client
+                </>
+              )}
+            </Badge>
+          </div>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsTrigger value="browse" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Browse Issues
+            </TabsTrigger>
+            <TabsTrigger value="post" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Post Issue
+            </TabsTrigger>
+            {user?.role === 'lawyer' && user.lawyerProfile?.isVerified && (
+              <TabsTrigger value="respond" className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4" />
+                Respond
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="hire" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Hire
+            </TabsTrigger>
+            <TabsTrigger value="recommend" className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4" />
+              Recommend Lawyers
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Browse Issues Tab */}
+          <TabsContent value="browse">
+            <LegalIssues onPostIssue={handlePostIssue} onViewIssue={handleViewIssue} />
+          </TabsContent>
+
+          {/* Post Issue Tab */}
+          <TabsContent value="post">
+            <PostIssue onIssuePosted={handleIssuePosted} />
+          </TabsContent>
+
+          {/* Respond Tab (Lawyers Only) */}
+          {user?.role === 'lawyer' && user.lawyerProfile?.isVerified && (
+            <TabsContent value="respond">
+              {selectedIssue ? (
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Responding to Issue
+                      </CardTitle>
+                      <CardDescription>
+                        Provide your legal expertise and approach to this issue
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-4">
+                        <h3 className="font-semibold text-lg mb-2">{selectedIssue.title}</h3>
+                        <p className="text-muted-foreground mb-3">{selectedIssue.description}</p>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="secondary">{selectedIssue.category}</Badge>
+                          <Badge variant="outline">{selectedIssue.urgency}</Badge>
+                          {selectedIssue.budget && (
+                            <Badge variant="outline">Budget: ${selectedIssue.budget}</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setSelectedIssue(null)}
+                        className="mb-4"
+                      >
+                        ← Back to Issues
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <LawyerResponse 
+                    issueId={selectedIssue._id}
+                    issueTitle={selectedIssue.title}
+                    onResponseSubmitted={() => {
+                      setSelectedIssue(null);
+                      setActiveTab('browse');
+                    }}
+                    onCancel={() => {
+                      setSelectedIssue(null);
+                      setActiveTab('browse');
+                    }}
+                  />
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="pt-6 text-center">
+                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Select an Issue to Respond</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Browse through legal issues and click on one to provide your professional response.
+                    </p>
+                    <Button onClick={() => setActiveTab('browse')}>
+                      Browse Issues
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          )}
+
+          {/* Hire Tab */}
+          <TabsContent value="hire">
+            {selectedResponse ? (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Hiring Process
+                    </CardTitle>
+                    <CardDescription>
+                      Review the lawyer's response and proceed with hiring
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <h3 className="font-semibold text-lg mb-2">Lawyer Response</h3>
+                      <div className="bg-muted p-4 rounded-lg mb-3">
+                        <p className="text-sm">{selectedResponse.content}</p>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Approach:</span> {selectedResponse.approach}
+                        </div>
+                        <div>
+                          <span className="font-medium">Estimated Time:</span> {selectedResponse.estimatedTime}
+                        </div>
+                        <div>
+                          <span className="font-medium">Estimated Cost:</span> ${selectedResponse.estimatedCost}
+                        </div>
+                        <div>
+                          <span className="font-medium">Experience:</span> {selectedResponse.experience} years
+                        </div>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setSelectedResponse(null)}
+                      className="mb-4"
+                    >
+                      ← Back to Responses
+                    </Button>
+                  </CardContent>
+                </Card>
+                
+                <HireLawyer 
+                  response={selectedResponse}
+                  issue={selectedIssue}
+                  onHireCompleted={() => {
+                    setSelectedResponse(null);
+                    setActiveTab('browse');
+                  }}
+                  onCancel={() => {
+                    setSelectedResponse(null);
+                    setActiveTab('browse');
+                  }}
+                />
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Select a Response to Hire</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Browse through lawyer responses to legal issues and select one to proceed with hiring.
+                  </p>
+                  <Button onClick={() => setActiveTab('browse')}>
+                    Browse Issues
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Recommend Lawyers Tab */}
+          <TabsContent value="recommend">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="h-5 w-5" />
+                  Get Lawyer Recommendations
+                </CardTitle>
+                <CardDescription>Describe your issue briefly and get top matches.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <textarea
+                  value={storyDraft}
+                  onChange={(e) => setStoryDraft(e.target.value)}
+                  placeholder="Write your question or case summary..."
+                  className="w-full border rounded p-3 h-28"
+                />
+                <div className="flex gap-2">
+                  <Button onClick={fetchRecommendations} disabled={recsLoading || (!storyDraft && !selectedIssue)}>
+                    {recsLoading ? 'Finding...' : 'Find Lawyers'}
+                  </Button>
+                </div>
+
+                {recs && (
+                  <div className="space-y-4">
+                    {recs.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No matching lawyers found for your query.</p>
+                        <p className="text-sm">Try using different keywords or describing your legal issue more specifically.</p>
+                      </div>
+                    )}
+                    {recs.map((r: any, idx: number) => (
+                      <Card key={idx} className="border hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold text-lg">{r.name}</h3>
+                                <Badge variant="secondary" className="flex items-center gap-1">
+                                  <Star className="h-3 w-3" />
+                                  {r.rating}/5
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-muted-foreground mb-2">
+                                {r.details?.expertise || r.expertise?.join(', ')}
+                              </div>
+                              <div className="text-sm text-muted-foreground mb-3">
+                                {r.details?.experience} • {r.details?.location}
+                              </div>
+                              <p className="text-sm text-gray-700 mb-3">{r.bio}</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-medium text-primary">
+                                Match: {(r.score * 100).toFixed(0)}%
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {r.matchedExpertise?.length || 0} expertise matches
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-wrap gap-2">
+                              {r.matchedExpertise?.slice(0, 3).map((exp: string, i: number) => (
+                                <Badge key={i} variant="outline" className="text-xs">
+                                  {exp}
+                                </Badge>
+                              ))}
+                              {r.matchedExpertise?.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{r.matchedExpertise.length - 3} more
+                                </Badge>
+                              )}
+                            </div>
+                            <Button size="sm" variant="outline">
+                              View Profile
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default LegalCommunity;
